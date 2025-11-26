@@ -19,6 +19,11 @@ EVENTS = [
 def index():
     return render_template("index.html", events=EVENTS)
 
+@app.route("/event/<int:event_id>")
+def event_detail(event_id):
+    event = next((e for e in EVENTS if e["id"] == event_id), None)
+    return render_template("event.html", event=event)
+
 @app.route("/showqrcode", methods=['POST'])
 def showqrcode():
     qr_id, file_path = generate_qr()
