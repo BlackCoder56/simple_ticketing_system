@@ -7,6 +7,17 @@ import os
 app = Flask(__name__)
 app.config["QR_FOLDER"] = "static/qrcodes"
 
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+@app.route("/showqrcode", methods=['POST'])
+def showqrcode():
+    qr_id, file_path = generate_qr()
+
+    return render_template("showqrcode.html", qr_id=qr_id, qr_path=file_path)
+
+# Helper functions
 def generate_qr():
     # generate unique ID for this QR
     qr_id = str(uuid.uuid4())
@@ -17,16 +28,6 @@ def generate_qr():
     qr.save(file_path)
 
     return qr_id, file_path
-
-@app.route("/")
-def index():
-    return render_template("index.html")
-
-@app.route("/showqrcode", methods=['POST'])
-def showqrcode():
-    qr_id, file_path = generate_qr()
-
-    return render_template("showqrcode.html", qr_id=qr_id, qr_path=file_path)
 
 if __name__ == "__main__":
     app.run(debug=True)
