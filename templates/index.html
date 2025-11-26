@@ -6,9 +6,21 @@
     <title>Simple Ticketing System</title>
 </head>
 <body>
-    <h1>Simple Ticketing System</h1>
+    <!-- <h1>Simple Ticketing System</h1>
     <form action="showqrcode" method="post">
         <button type="submit">Show QRCode</button>
-    </form>
+    </form> -->
+
+    <h1>Simple Ticketsing System</h1>
+    <h2>Available events</h2>
+
+    {% for event in events %}
+        <div>
+            <h2>{{ event.title }}</h2>
+            <p>{{ event.price }}</p>
+
+            <!-- <a href="/event/{{ event.id }}">View Details</a> -->
+        </div>
+    {%endfor%}
 </body>
 </html>

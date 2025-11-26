@@ -7,9 +7,17 @@ import os
 app = Flask(__name__)
 app.config["QR_FOLDER"] = "static/qrcodes"
 
+# Events
+EVENTS = [
+    {"id":1, "title": "Tech Conference", "price": 20000},
+    {"id":2, "title": "Freshers Bowl", "price": 40000},
+    {"id":3, "title": "Python Hakathon", "price": 15000},
+    {"id":4, "title": "Nyama Choma", "price": 34000},
+]
+
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("index.html", events=EVENTS)
 
 @app.route("/showqrcode", methods=['POST'])
 def showqrcode():
