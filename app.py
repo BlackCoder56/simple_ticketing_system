@@ -27,7 +27,6 @@ def event_detail(event_id):
 @app.route("/showqrcode", methods=['POST'])
 def showqrcode():
     qr_id, file_path = generate_qr()
-
     return render_template("showqrcode.html", qr_id=qr_id, qr_path=file_path)
 
 # Helper functions
