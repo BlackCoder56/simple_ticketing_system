@@ -29,12 +29,21 @@ def showqrcode():
     qr_id, file_path = generate_qr()
     return render_template("showqrcode.html", qr_id=qr_id, qr_path=file_path)
 
+@app.route("/buy/<int:event_id>", methods=['POST'])
+def buy_ticket(event_id):
+    event = next((e for e in EVENTS if e["id"] == event_id), None)
+    
+    qr_id, file_path = generate_qr(event["title"])
+
+    return render_template("ticket.html", event=event, qr_id=qr_id, qr_path=file_path)
+
 # Helper functions
-def generate_qr():
+def generate_qr(event_title):
     # generate unique ID for this QR
     qr_id = str(uuid.uuid4())
     file_path = os.path.join(app.config["QR_FOLDER"], f"{qr_id}.png")
     
+    data = [qr_id, event_title]
     # creating QR
     qr = qrcode.make(qr_id)
     qr.save(file_path)
