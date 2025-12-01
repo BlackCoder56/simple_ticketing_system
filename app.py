@@ -65,7 +65,10 @@ def view_ticket(qr_id):
     if ticket is None:
         return "Ticket not found", 404
     
-    return render_template("ticket.html", ticket=ticket)
+    return render_template(
+        "view_ticket.html", 
+        ticket=ticket
+        )
 
 # Helper functions
 def generate_qr(event_title):
