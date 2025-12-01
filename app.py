@@ -15,6 +15,9 @@ EVENTS = [
     {"id":4, "title": "Nyama Choma", "price": 34000},
 ]
 
+# Tickets
+TICKETS = {}
+
 @app.route("/")
 def index():
     return render_template("index.html", events=EVENTS)
@@ -32,10 +35,37 @@ def showqrcode():
 @app.route("/buy/<int:event_id>", methods=['POST'])
 def buy_ticket(event_id):
     event = next((e for e in EVENTS if e["id"] == event_id), None)
-    
     qr_id, file_path = generate_qr(event["title"])
 
-    return render_template("ticket.html", event=event, qr_id=qr_id, qr_path=file_path)
+    # Store this ticket
+    TICKETS[qr_id] = {
+        "qr_id": qr_id,
+        "event": event,
+        "qr_path": file_path
+    }
+    
+    return render_template(
+        "ticket.html",
+        ticket=event,
+        qr_id=qr_id,
+        qr_path=file_path
+    )
+
+# List all tickets
+@app.route("/tickets")
+def list_tickets():
+    all_tickets = list(TICKETS.values())
+    return render_template("tickets.html", tickets=all_tickets)
+
+# View ticket
+@app.route("/ticket/<qr_id>")
+def view_ticket(qr_id):
+    ticket = TICKETS.get(qr_id)
+
+    if ticket is None:
+        return "Ticket not found", 404
+    
+    return render_template("ticket.html", ticket=ticket)
 
 # Helper functions
 def generate_qr(event_title):

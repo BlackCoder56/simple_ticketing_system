@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Tickets</title>
+</head>
+<body>
+    {% if tickets %}
+        <h1>My Tickets</h1>
+        {% for ticket in tickets %}
+                <div style="border:1px solid #ddd; padding:10px; margin:10px 0;">
+                    <h3>{{ ticket.event.title }}</h3>
+                    <p>Price: {{ ticket.event.price }}</p>
+                    <p>Ticket ID: {{ ticket.qr_id }}</p>
+
+                    <img src="/{{ ticket.qr_id }}" width="120" alt="">
+
+                    <br><br>
+                    <a href="/ticket/{{ ticket.qr_id }}">View Ticket</a>
+                </div>
+        {% endfor %}
+    {% else %}
+            <p>No tickets bought yet.</p>
+    {% endif %}
+
+</body>
+</html>
