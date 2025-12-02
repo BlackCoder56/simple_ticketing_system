@@ -1,87 +1,112 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 import uuid
 import qrcode
 import os
 
+from models import db, Event, Ticket
+
 
 app = Flask(__name__)
+
+# Folder for saving QR images
 app.config["QR_FOLDER"] = "static/qrcodes"
 
-# Events
-EVENTS = [
-    {"id":1, "title": "Tech Conference", "price": 20000},
-    {"id":2, "title": "Freshers Bowl", "price": 40000},
-    {"id":3, "title": "Python Hakathon", "price": 15000},
-    {"id":4, "title": "Nyama Choma", "price": 34000},
-]
+# PostgreSQL database connection
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:swap1@localhost/simple_ticketing_system"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-# Tickets
-TICKETS = {}
+db.init_app(app)
 
+
+# -----------------------------
+# Home - List all events from DB
+# -----------------------------
 @app.route("/")
 def index():
-    return render_template("index.html", events=EVENTS)
+    events = Event.query.all()   # instead of in-memory EVENTS[]
+    return render_template("index.html", events=events)
 
+
+# -----------------------------
+# Show event details
+# -----------------------------
 @app.route("/event/<int:event_id>")
 def event_detail(event_id):
-    event = next((e for e in EVENTS if e["id"] == event_id), None)
+    event = Event.query.get_or_404(event_id)
     return render_template("event.html", event=event)
 
-@app.route("/showqrcode", methods=['POST'])
-def showqrcode():
-    qr_id, file_path = generate_qr()
-    return render_template("showqrcode.html", qr_id=qr_id, qr_path=file_path)
 
-@app.route("/buy/<int:event_id>", methods=['POST'])
+# -----------------------------
+# Buy a ticket
+# -----------------------------
+@app.route("/buy/<int:event_id>", methods=["POST"])
 def buy_ticket(event_id):
-    event = next((e for e in EVENTS if e["id"] == event_id), None)
-    qr_id, file_path = generate_qr(event["title"])
+    event = Event.query.get_or_404(event_id)
 
-    # Store this ticket
-    TICKETS[qr_id] = {
-        "qr_id": qr_id,
-        "event": event,
-        "qr_path": file_path
-    }
-    
-    return render_template(
-        "ticket.html",
-        ticket=event,
-        qr_id=qr_id,
-        qr_path=file_path
-    )
+    # Validate quantity input
+    try:
+        quantity = int(request.form.get("quantity", 1))
+        if quantity < 1:
+            raise ValueError("Quantity must be at least 1.")
+    except ValueError as ve:
+        return f"Invalid quantity: {ve}", 400
 
-# List all tickets
+    tickets = []
+    try:
+        for _ in range(quantity):
+            qr_id, file_path = generate_qr(event.title)
+            ticket = Ticket(qr_id=qr_id, event_id=event.id, qr_path=file_path)
+            db.session.add(ticket)
+            tickets.append(ticket)
+
+        db.session.commit()
+
+    except Exception as e:
+        db.session.rollback()  # Rollback if any error occurs
+        return f"An error occurred while purchasing tickets: {e}", 500
+
+    return render_template("tickets.html", tickets=tickets)
+
+
+# -----------------------------
+# View all purchased tickets
+# -----------------------------
 @app.route("/tickets")
 def list_tickets():
-    all_tickets = list(TICKETS.values())
-    return render_template("tickets.html", tickets=all_tickets)
+    tickets = Ticket.query.all()
+    return render_template("tickets.html", tickets=tickets)
 
-# View ticket
+
+# -----------------------------
+# View a single ticket via QR ID
+# -----------------------------
 @app.route("/ticket/<qr_id>")
 def view_ticket(qr_id):
-    ticket = TICKETS.get(qr_id)
+    ticket = Ticket.query.filter_by(qr_id=qr_id).first()
 
-    if ticket is None:
+    if not ticket:
         return "Ticket not found", 404
-    
-    return render_template(
-        "view_ticket.html", 
-        ticket=ticket
-        )
 
-# Helper functions
+    return render_template("view_ticket.html", ticket=ticket)
+
+
+# -----------------------------
+# QR Generator Helper
+# -----------------------------
 def generate_qr(event_title):
-    # generate unique ID for this QR
     qr_id = str(uuid.uuid4())
     file_path = os.path.join(app.config["QR_FOLDER"], f"{qr_id}.png")
-    
-    data = [qr_id, event_title]
-    # creating QR
+
     qr = qrcode.make(qr_id)
     qr.save(file_path)
 
     return qr_id, file_path
 
+
+# -----------------------------
+# Run the app
+# -----------------------------
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()   # Creates tables ONLY if they don't exist
     app.run(debug=True)

@@ -8,7 +8,8 @@
 <body>
     <h1>{{ ticket.title }}</h1>
     <h2>Event Secrete ID: {{ qr_id }}</h2>
-    <img src="/{{ qr_path }}" width="200" alt="{{ ticket.title }}" />
+    <!-- <img src="/{{ qr_path }}" width="200" alt="{{ ticket.title }}" /> -->
+    <img src="{{ url_for('static', filename='qrcodes/' ~ ticket.qr_id ~ '.png') }}" alt="QR Code">
 
     <br>
     <br>
